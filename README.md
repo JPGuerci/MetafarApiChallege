@@ -11,13 +11,12 @@ A continuación se presentan los pasos necesarios para ejecutar la base de datos
 ## Comandos para ejecutar la base de datos en Docker
 
 1. **Descargar la imagen de Docker**:
-
    Ejecuta el siguiente comando en la terminal para descargar la imagen del SQL Server:
 
-   ```
-   docker pull jpguerci/sqlservermetafar:1.0
-   docker run --rm -it -p 1433:1433 jpguerci/sqlservermetafar:1.0
-   
+```
+docker pull jpguerci/sqlservermetafar:1.0
+docker run --rm -it -p 1433:1433 jpguerci/sqlservermetafar:1.0
+```
  2. **Datos de conexion a la db**:
  ```
  Port:1433
