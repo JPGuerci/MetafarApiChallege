@@ -18,7 +18,7 @@ namespace MetafarApiChallege.Infrastructure.Repositories
 
         public async Task<Card> GetByCardNumber(int CardNumber)
         {
-            Card result = await _context.Cards.FirstAsync(c => c.CardNumber.Equals(CardNumber));
+            Card? result = await _context.Cards.FirstOrDefaultAsync(c=> c.CardNumber == CardNumber);
             return result;
         }
     }

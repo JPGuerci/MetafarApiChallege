@@ -25,16 +25,16 @@ namespace MetafarApiChallege.Infrastructure.Services
             Card card = await _cardService.GetByCardNumber(accountRequest.CardNumber);
 
             if (card == null)
-                throw new NotFoundException("Invalid data: Card not found.");
+                throw new AccountNotFoundException("Card not found.");
 
             if (card.LoginFailures >= _appSettings.CountLoginFailures)
-                throw new UnauthorizedAccessException("User not authorized due to too many failed login attempts.");
+                throw new Helpers.UnauthorizedAccessException("User not authorized due to too many failed login attempts.");
 
             if (card.Pin != accountRequest.Pin)
             {
                 int failureCount = card.LoginFailures.GetValueOrDefault();
-                await _cardService.UpdateLoginFailures(card.Id, failureCount++);
-                throw new NotFoundException("Invalid data: Incorrect PIN.");
+                await _cardService.UpdateLoginFailures(card.Id, failureCount + 1);
+                throw new InvalidCredentialsException("Incorrect PIN.");
             }
 
             if (card.LoginFailures > 0)
@@ -51,10 +51,7 @@ namespace MetafarApiChallege.Infrastructure.Services
 
             var tokenDescriptor = new SecurityTokenDescriptor
             {
-                Subject = new ClaimsIdentity(new[]
-                {
-                    new Claim("IdCard", card.Id.ToString())
-                }),
+                Subject = new ClaimsIdentity(new[] { new Claim("IdCard", card.Id.ToString()) }),
                 Expires = DateTime.UtcNow.AddHours(_appSettings.TokenExpiresHours),
                 SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
             };

@@ -1,57 +1,65 @@
 ﻿using System.Net;
 using System.Text.Json;
 
-namespace MetafarApiChallege.Infrastructure.Helpers;
-public class ExceptionHandlingMiddleware
+namespace MetafarApiChallege.Infrastructure.Helpers
 {
-    private readonly RequestDelegate _next;
-    private readonly ILogger<ExceptionHandlingMiddleware> _logger;
-
-    public ExceptionHandlingMiddleware(RequestDelegate next, ILogger<ExceptionHandlingMiddleware> logger)
+    public class ExceptionHandlingMiddleware
     {
-        _next = next;
-        _logger = logger;
-    }
+        private readonly RequestDelegate _next;
+        private readonly ILogger<ExceptionHandlingMiddleware> _logger;
 
-    public async Task InvokeAsync(HttpContext context)
-    {
-        try
+        public ExceptionHandlingMiddleware(RequestDelegate next, ILogger<ExceptionHandlingMiddleware> logger)
         {
-            await _next(context);
+            _next = next;
+            _logger = logger;
         }
-        catch (Exception ex)
+
+        public async Task InvokeAsync(HttpContext context)
         {
-            await HandleExceptionAsync(context, ex);
+            try
+            {
+                await _next(context);
+            }
+            catch (Exception ex)
+            {
+                await HandleExceptionAsync(context, ex);
+            }
         }
-    }
 
-    private Task HandleExceptionAsync(HttpContext context, Exception ex)
-    {
-        HttpStatusCode statusCode;
-
-        if (ExceptionMappings.ExceptionStatusCodes.TryGetValue(ex.GetType(), out statusCode))
+        private Task HandleExceptionAsync(HttpContext context, Exception ex)
         {
+            HttpStatusCode statusCode;
+
+            // Verifica si la excepción es de tipo CustomException
+            if (ex is CustomException customEx)
+            {
+                statusCode = customEx.StatusCode;
+            }
+            else
+            {
+               
+                statusCode = HttpStatusCode.InternalServerError;
+            }
+
             return HandleExceptionResponse(context, ex, statusCode);
         }
 
-        return HandleExceptionResponse(context, ex, HttpStatusCode.InternalServerError);
-    }
-
-    private Task HandleExceptionResponse(HttpContext context, Exception ex, HttpStatusCode statusCode)
-    {
-        context.Response.ContentType = "application/json";
-        context.Response.StatusCode = (int)statusCode;
-
-        var response = new
+        private Task HandleExceptionResponse(HttpContext context, Exception ex, HttpStatusCode statusCode)
         {
-            message = ex.Message,
-            statusCode = context.Response.StatusCode
-        };
+            context.Response.ContentType = "application/json";
+            context.Response.StatusCode = (int)statusCode;
 
-        var jsonResponse = JsonSerializer.Serialize(response);
+            var response = new
+            {
+                message = ex.Message,
+                statusCode = context.Response.StatusCode
+            };
 
-        _logger.LogError(ex, ex.Message);
+            var jsonResponse = JsonSerializer.Serialize(response);
 
-        return context.Response.WriteAsync(jsonResponse);
+            _logger.LogError(ex, ex.Message);
+
+            return context.Response.WriteAsync(jsonResponse);
+        }
     }
 }

@@ -4,7 +4,7 @@ using MetafarApiChallege.Infrastructure.Helpers;
 using MetafarApiChallege.Infrastructure.Repositories.Interfaces;
 using MetafarApiChallege.Infrastructure.Repositories.Models;
 using MetafarApiChallege.Infrastructure.Services.Interfaces;
-using System.Security.Cryptography.Xml;
+using System.Net;
 
 namespace MetafarApiChallege.Infrastructure.Services
 {
@@ -17,11 +17,10 @@ namespace MetafarApiChallege.Infrastructure.Services
 
         public AccountService(IUnitOfWork unitOfWork, IMapper mapper, IAccountRepository accountRepository, IOperationService operationService)
         {
-
+            _unitOfWork = unitOfWork;
             _mapper = mapper;
             _accountRepository = accountRepository;
             _operationService = operationService;
-            _unitOfWork = unitOfWork;
         }
 
         public async Task<AccountDto> GetByIdCard(Guid idCard)
@@ -33,7 +32,6 @@ namespace MetafarApiChallege.Infrastructure.Services
 
             await _operationService.AddOperation(account, 0, idCard, TransactionTypesHelper.Inquiry);
             await _unitOfWork.CommitAsync();
-
 
             return response;
         }
@@ -52,8 +50,10 @@ namespace MetafarApiChallege.Infrastructure.Services
         public async Task<OperationDto> CashOut(Guid idCard, decimal amount)
         {
             Account? account = await GetAndValidate(idCard);
-            Decimal amountNeg = -Math.Abs(amount);
-            if ((account.CurrentBalance + amountNeg) < 0) throw new InvalidTransferException("Insufficient Funds");
+            decimal amountNeg = -Math.Abs(amount);
+            if ((account.CurrentBalance + amountNeg) < 0)
+                throw new BusinessException("Insufficient funds for this transaction.");
+
             OperationDto result = await _operationService.AddOperation(account, amountNeg, idCard, TransactionTypesHelper.CashOut);
             await UpdateBalance(account, amountNeg);
 
@@ -67,33 +67,39 @@ namespace MetafarApiChallege.Infrastructure.Services
             Account? accountOrigin = await GetAndValidate(transfer.IdCardOrigin);
             Account? accountDestiny = await GetAndValidate(transfer.CardNumberDestiny);
             decimal amount = -Math.Abs(transfer.Amount);
-            if (accountOrigin.Id.Equals(accountDestiny.Id)) throw new InvalidTransferException("The cards belong to the same account.");
-            if (accountOrigin.CurrentBalance + amount < 0) throw new InvalidTransferException("Insufficient Funds");
-            OperationDto OperationOrigin = await _operationService.AddOperation(accountOrigin, amount, transfer.IdCardOrigin, TransactionTypesHelper.Transfer);
+
+            if (accountOrigin.Id.Equals(accountDestiny.Id))
+                throw new BusinessException("The cards belong to the same account.");
+
+            if (accountOrigin.CurrentBalance + amount < 0)
+                throw new BusinessException("Insufficient funds for this transaction.");
+
+            OperationDto operationOrigin = await _operationService.AddOperation(accountOrigin, amount, transfer.IdCardOrigin, TransactionTypesHelper.Transfer);
             await UpdateBalance(accountOrigin, amount);
-            OperationDto OperationDestiny = await _operationService.AddOperation(accountDestiny, transfer.Amount, transfer.IdCardOrigin, TransactionTypesHelper.Transfer);
+
+            OperationDto operationDestiny = await _operationService.AddOperation(accountDestiny, transfer.Amount, transfer.IdCardOrigin, TransactionTypesHelper.Transfer);
             await UpdateBalance(accountDestiny, transfer.Amount);
 
             await _unitOfWork.CommitAsync();
 
-            TransferResponse result = _mapper.Map<TransferResponse>(OperationOrigin);
+            TransferResponse result = _mapper.Map<TransferResponse>(operationOrigin);
             result.CardNumberDestiny = transfer.CardNumberDestiny;
             result.Balance = accountOrigin.CurrentBalance;
 
             return result;
-
         }
 
         private async Task<Account> GetAndValidate(Guid idCard)
         {
             Account? account = await _accountRepository.GetByIdCard(idCard);
-            if (account == null) throw new NotFoundException("Invalid IdCard");
+            if (account == null) throw new AccountNotFoundException("Account not found for the given IdCard.");
             return account;
         }
-        private async Task<Account> GetAndValidate(int CardNumber)
+
+        private async Task<Account> GetAndValidate(int cardNumber)
         {
-            Account? account = await _accountRepository.GetByCardNumber(CardNumber);
-            if (account == null) throw new NotFoundException("Invalid IdCard");
+            Account? account = await _accountRepository.GetByCardNumber(cardNumber);
+            if (account == null) throw new AccountNotFoundException("Account not found for the given Card Number.");
             return account;
         }
 
@@ -101,9 +107,7 @@ namespace MetafarApiChallege.Infrastructure.Services
         {
             account.CurrentBalance += amount;
             _accountRepository.Update(account);
-
             await Task.CompletedTask;
         }
-
     }
 }

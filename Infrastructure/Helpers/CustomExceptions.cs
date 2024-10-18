@@ -2,42 +2,41 @@
 
 namespace MetafarApiChallege.Infrastructure.Helpers
 {
-    public static class ExceptionMappings
+    public class CustomException : Exception
     {
-        public static readonly Dictionary<Type, HttpStatusCode> ExceptionStatusCodes = new()
+        public HttpStatusCode StatusCode { get; }
+
+        public CustomException(HttpStatusCode statusCode, string? message)
+            : base(message)
         {
-            { typeof(InvalidTransferException), HttpStatusCode.BadRequest },
-            { typeof(InternalServerException), HttpStatusCode.InternalServerError },
-            { typeof(NotFoundException), HttpStatusCode.NotFound },
-            { typeof(UnauthorizedAccessException), HttpStatusCode.Forbidden }
-            
-        };
+            StatusCode = statusCode;
+        }
+    }
+    public class AccountNotFoundException : CustomException
+    {
+        public AccountNotFoundException(string message)
+            : base(HttpStatusCode.NotFound, message) { }
     }
 
-    public class InvalidTransferException : Exception
+    public class UnauthorizedAccessException : CustomException
     {
-        public InvalidTransferException() : base() { }
-
-        public InvalidTransferException(string message) : base(message) { }
-
-        public InvalidTransferException(string message, Exception innerException) : base(message, innerException) { }
+        public UnauthorizedAccessException(string message)
+            : base(HttpStatusCode.Unauthorized, message) { }
     }
 
-    public class InternalServerException : Exception
+    public class DatabaseException : CustomException
     {
-        public InternalServerException() : base() { }
-
-        public InternalServerException(string message) : base(message) { }
-
-        public InternalServerException(string message, Exception innerException) : base(message, innerException) { }
+        public DatabaseException(string message)
+            : base(HttpStatusCode.InternalServerError, message) { }
     }
-
-    public class NotFoundException : Exception
+    public class InvalidCredentialsException : CustomException
     {
-        public NotFoundException() : base() { }
-
-        public NotFoundException(string message) : base(message) { }
-
-        public NotFoundException(string message, Exception innerException) : base(message, innerException) { }
+        public InvalidCredentialsException(string message)
+            : base(HttpStatusCode.BadRequest, message) { }
+    }
+    public class BusinessException : CustomException
+    {
+        public BusinessException(string message)
+            : base(HttpStatusCode.BadRequest, message) { }
     }
 }
