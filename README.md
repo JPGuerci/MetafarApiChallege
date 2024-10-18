@@ -1,4 +1,7 @@
-# Proyecto Metafar - Configuración y Ejecución
+# Proyecto Metafar 
+
+Diagrama:
+![DER](DER.png)
 
 Este proyecto utiliza una base de datos SQL Server contenida en un contenedor Docker. 
 A continuación se presentan los pasos necesarios para ejecutar la base de datos, las credenciales de conexión y datos de prueba.
