@@ -14,21 +14,28 @@ A continuación se presentan los pasos necesarios para ejecutar la base de datos
    Ejecuta el siguiente comando en la terminal para descargar la imagen del SQL Server:
 
 ```
-docker pull jpguerci/sqlservermetafar:1.0
-docker run --rm -it -p 1433:1433 jpguerci/sqlservermetafar:1.0
+ docker pull jpguerci/sqlservermetafar:1.0
+ docker run --rm -it -p 1433:1433 jpguerci/sqlservermetafar:1.0
 ```
- 2. **Datos de conexion a la db**:
+2. **Datos de conexion a la db**:
  ```
- Port:1433
- Username:sa
- Password: metafar_ChallengeAPI"
+ port:1433
+ username:sa
+ password: metafar_ChallengeAPI"
 ```
  3.**Datos de prueba**:
+
+Tarjeta1:
 ```
-tarjeta1:
- "cardNumber": 987654,
-			"pin": 1111
+ {
+  "cardNumber": 987654,
+  "pin": 1111
+ }
+```
 Tarjeta2:  
-"cardNumber": 654564,
+```
+{
+  "cardNumber": 654564,
   "pin": 2222
+}
 ```
