@@ -101,15 +101,21 @@ namespace MetafarApiChallege.Controllers
         /// <summary>
         /// Retrieves a paginated list of account operations.
         /// </summary>
-        /// <param name="pageNumber">Page number for pagination (default is 1).</param>
-        /// <param name="pageSize">Number of items per page (default is 10).</param>
+        /// <param name="paginator">Pagination parameters including page number and page size.</param>
         /// <returns>Paginated list of operations related to the account.</returns>
         /// <response code="200">List of operations successfully retrieved.</response>
+        /// <response code="400">Bad request, invalid pagination parameters.</response>
         [HttpGet("operations")]
-        public async Task<IActionResult> GetOperations([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10)
+        public async Task<IActionResult> GetOperations([FromQuery] PaginatorRequest paginator)
         {
-            var response = await _operationService.GetOperations(idCard, pageNumber, pageSize);
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            var response = await _operationService.GetOperations(idCard, paginator.PageNumber, paginator.PageSize);
             return Ok(response);
         }
+
     }
 }
