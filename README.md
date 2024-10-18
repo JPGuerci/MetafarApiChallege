@@ -1,6 +1,7 @@
 # Proyecto Metafar 
 
-Diagrama:
+Diagrama
+
 ![DER](DER.png)
 
 Este proyecto utiliza una base de datos SQL Server contenida en un contenedor Docker. 
