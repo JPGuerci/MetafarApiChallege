@@ -25,7 +25,7 @@ A continuación se presentan los pasos necesarios para ejecutar la base de datos
  ```
  port:1433
  username:sa
- password: metafar_ChallengeAPI"
+ password: metafar_ChallengeAPI
 ```
  3.**Datos de prueba**:
 
